@@ -107,4 +107,55 @@ public class AutoApplyEmailService {
             return false;
         }
     }
+
+    /**
+     * Sends a "we applied on your behalf" confirmation email to the PlacementGO user.
+     *
+     * @param userEmail   The user's own email address
+     * @param jobTitle    e.g. "Backend Engineer"
+     * @param company     e.g. "Stripe"
+     * @param applyEmail  The employer email the application was sent to
+     */
+    public void sendUserConfirmation(String userEmail, String jobTitle, String company, String applyEmail) {
+        if (mailSender == null || userEmail == null || userEmail.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(fromEmail, "PlacementGO");
+            helper.setTo(userEmail);
+            helper.setSubject("✅ Applied: " + jobTitle + " at " + company);
+
+            String html = """
+                    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                                max-width:560px;color:#1e293b;line-height:1.7;">
+                        <h2 style="color:#2563EB;margin-bottom:4px;">Application Submitted</h2>
+                        <p>PlacementGO auto-applied to the following role on your behalf:</p>
+                        <table style="border-collapse:collapse;width:100%%;margin:16px 0;">
+                            <tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:600;width:40%%;">Role</td>
+                                <td style="padding:8px 12px;">%s</td></tr>
+                            <tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:600;">Company</td>
+                                <td style="padding:8px 12px;">%s</td></tr>
+                            <tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:600;">Sent to</td>
+                                <td style="padding:8px 12px;">%s</td></tr>
+                        </table>
+                        <p>Your tailored cover letter and resume were attached. You can track this
+                           application in your
+                           <a href="https://placementgo.in/tracker" style="color:#2563EB;">dashboard tracker</a>.</p>
+                        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+                        <p style="font-size:12px;color:#94a3b8;">
+                            You received this because auto-apply is enabled on
+                            <a href="https://placementgo.in" style="color:#2563EB;">PlacementGO</a>.
+                            <a href="https://placementgo.in/autoapply" style="color:#94a3b8;">Manage settings</a>
+                        </p>
+                    </div>
+                    """.formatted(jobTitle, company, applyEmail);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.info("Confirmation email sent to user {} for {}/{}", userEmail, jobTitle, company);
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.warn("Could not send confirmation email to {}: {}", userEmail, e.getMessage());
+        }
+    }
 }

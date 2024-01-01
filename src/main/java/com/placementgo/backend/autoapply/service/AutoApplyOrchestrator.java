@@ -11,6 +11,8 @@ import com.placementgo.backend.autoapply.repository.AutoApplyJobLeadRepository;
 import com.placementgo.backend.dashboard.entity.Application;
 import com.placementgo.backend.dashboard.entity.ApplicationStatus;
 import com.placementgo.backend.dashboard.repository.ApplicationRepository;
+import com.placementgo.backend.auth.model.User;
+import com.placementgo.backend.auth.repository.UserRepository;
 import com.placementgo.backend.resume.model.Resume;
 import com.placementgo.backend.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,7 @@ public class AutoApplyOrchestrator {
     private final AutoApplyJobLeadRepository leadRepo;
     private final ResumeRepository resumeRepo;
     private final ApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
 
     private final JobDiscoveryService discoveryService;
     private final JobMatchingService matchingService;
@@ -175,6 +178,9 @@ public class AutoApplyOrchestrator {
                                 "Application submitted to " + raw.company(),
                                 "Your application for " + raw.title() + " was emailed to " + raw.company() + ".",
                                 Map.of("company", raw.company(), "role", raw.title()));
+                        // Send confirmation email to the user
+                        userRepository.findById(userId).map(User::getEmail).ifPresent(userEmail ->
+                                emailService.sendUserConfirmation(userEmail, raw.title(), raw.company(), raw.applyEmail()));
                     }
                 } else {
                     // ── Manual required – send notification with template ──────
