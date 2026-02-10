@@ -1,4 +1,4 @@
-package com.placementgo.placementGo_backend;
+package com.placementgo.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
