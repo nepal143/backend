@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.UUID;
 
 @Service
@@ -15,23 +16,26 @@ import java.util.UUID;
 public class ResumeParsingService {
 
     private final ResumeRepository resumeRepository;
+    private final ResumeTextExtractor textExtractor;
+    private final ResumeStructurer structurer;
 
     @Async
     public void parseAsync(UUID resumeId) {
 
-        Resume resume = resumeRepository.findById(resumeId).orElseThrow();
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow();
 
         try {
             resume.setStatus(ResumeStatus.PARSING);
             resumeRepository.save(resume);
 
-            // 🚧 TEMP: mock parsing result
-            String parsedJson = """
-            {
-              "name": "John Doe",
-              "skills": ["Java", "Spring Boot"]
-            }
-            """;
+            File file = new File(resume.getStoredFilePath());
+
+            // 1️⃣ Read actual resume content
+            String rawText = textExtractor.extractText(file);
+
+            // 2️⃣ Convert to structured JSON
+            String parsedJson = structurer.structure(rawText);
 
             resume.setParsedJson(parsedJson);
             resume.setStatus(ResumeStatus.PARSED);

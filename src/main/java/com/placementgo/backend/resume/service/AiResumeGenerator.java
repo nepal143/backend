@@ -1,4 +1,5 @@
 package com.placementgo.backend.resume.service;
 
-public class AiResumeGenerator {
+public interface AiResumeGenerator {
+    String generate(String parsedResumeJson, String jobDescription);
 }

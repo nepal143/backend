@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/placementgo
     username: postgres
-    password: placementgo
+    password: root
 
   jpa:
     hibernate:
