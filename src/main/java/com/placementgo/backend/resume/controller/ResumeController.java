@@ -1,6 +1,9 @@
 package com.placementgo.backend.resume.controller;
 
-import com.placementgo.backend.resume.model.Resume;;
+import com.placementgo.backend.resume.dto.GenerateResumeRequest;
+import com.placementgo.backend.resume.dto.GenerateResumeResponse;
+import com.placementgo.backend.resume.model.Resume;
+import org.springframework.security.core.Authentication;
 import com.placementgo.backend.resume.service.ResumeService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,9 +28,11 @@ public class ResumeController {
      */
     @PostMapping("/upload")
     public ResponseEntity<Resume> uploadResume(
-            @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
     ) throws Exception {
+
+        UUID userId = (UUID) authentication.getPrincipal();
 
         Resume resume = resumeService.uploadResume(userId, file);
         return ResponseEntity.ok(resume);
@@ -42,5 +47,16 @@ public class ResumeController {
     ) {
         Resume resume = resumeService.getResumeById(resumeId);
         return ResponseEntity.ok(resume);
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<GenerateResumeResponse> generateResume(
+            @RequestBody GenerateResumeRequest request,
+            Authentication authentication
+    ) {
+        UUID userId = (UUID) authentication.getPrincipal();
+        return ResponseEntity.ok(
+                resumeService.generateResume(userId, request)
+        );
     }
 }
