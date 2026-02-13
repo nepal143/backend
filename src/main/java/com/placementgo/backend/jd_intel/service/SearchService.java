@@ -20,14 +20,12 @@ public class SearchService {
     private String apiKey;
 
     @Value("${jd-intel.search-engine-id}")
-    private String searchEngineId; // For Google Custom Search
+    private String searchEngineId;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<String> search(String query) {
         log.info("Searching for: {}", query);
-        // Implementation for Google Custom Search JSON API
-        // https://customsearch.googleapis.com/customsearch/v1?key=INSERT_YOUR_API_KEY&cx=017576662512468239146:omuauf_lfve&q=lectures
 
         if (apiKey == null || apiKey.isEmpty()) {
             log.warn("Search API Key is missing. Returning empty results.");
