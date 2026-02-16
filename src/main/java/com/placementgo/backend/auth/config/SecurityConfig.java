@@ -30,22 +30,15 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // 🔹 CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 🔹 Disable CSRF for JWT
                 .csrf(csrf -> csrf.disable())
-
-                // 🔹 VERY IMPORTANT for JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // 🔹 Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow preflight requests
-                        .requestMatchers("OPTIONS", "/**").permitAll()
+                        // ✅ Proper preflight handling
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Public auth endpoints
                         .requestMatchers("/auth/**").permitAll()
@@ -53,8 +46,6 @@ public class SecurityConfig {
                         // Everything else needs JWT
                         .anyRequest().authenticated()
                 )
-
-                // 🔹 JWT filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

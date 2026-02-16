@@ -3,6 +3,7 @@ package com.placementgo.backend.resume.controller;
 import com.placementgo.backend.resume.dto.GenerateResumeRequest;
 import com.placementgo.backend.resume.dto.GenerateResumeResponse;
 import com.placementgo.backend.resume.model.Resume;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import com.placementgo.backend.resume.service.ResumeService;
 
@@ -26,16 +27,23 @@ public class ResumeController {
      * Upload resume (PDF / DOCX)
      * User ID comes from API Gateway after JWT validation
      */
-    @PostMapping("/upload")
-    public ResponseEntity<Resume> uploadResume(
+    @PostMapping(
+            value = "/upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<GenerateResumeResponse> uploadAndGenerate(
             @RequestParam("file") MultipartFile file,
+            @RequestParam("jobDescription") String jobDescription,
             Authentication authentication
     ) throws Exception {
 
         UUID userId = (UUID) authentication.getPrincipal();
 
-        Resume resume = resumeService.uploadResume(userId, file);
-        return ResponseEntity.ok(resume);
+        GenerateResumeResponse response =
+                resumeService.uploadAndGenerate(userId, file, jobDescription);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -49,14 +57,5 @@ public class ResumeController {
         return ResponseEntity.ok(resume);
     }
 
-    @PostMapping("/generate")
-    public ResponseEntity<GenerateResumeResponse> generateResume(
-            @RequestBody GenerateResumeRequest request,
-            Authentication authentication
-    ) {
-        UUID userId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(
-                resumeService.generateResume(userId, request)
-        );
-    }
+
 }
