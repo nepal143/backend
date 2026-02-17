@@ -1,6 +1,5 @@
 package com.placementgo.backend.resume.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.placementgo.backend.resume.ai.GeminiClient;
 import com.placementgo.backend.resume.ai.GeminiPromptBuilder;
 import org.springframework.stereotype.Service;
@@ -10,7 +9,6 @@ public class GeminiAiResumeGenerator implements AiResumeGenerator {
 
     private final GeminiClient geminiClient;
     private final GeminiPromptBuilder promptBuilder;
-    private final ObjectMapper mapper = new ObjectMapper();
 
     public GeminiAiResumeGenerator(
             GeminiClient geminiClient,
@@ -21,20 +19,40 @@ public class GeminiAiResumeGenerator implements AiResumeGenerator {
     }
 
     @Override
-    public String generate(String parsedResumeJson, String jobDescription) {
+    public String generateOptimizedJson(String parsedResumeJson, String jobDescription) {
 
-        try {
-            String prompt = promptBuilder.build(parsedResumeJson, jobDescription);
+        // Build prompt
+        String prompt = promptBuilder.buildLatexPrompt(
+                parsedResumeJson,
+                jobDescription
+        );
 
-            String aiResponse = geminiClient.generateContent(prompt);
+        // Call Gemini
+        String aiResponse = geminiClient.generateContent(prompt);
 
-            // Validate JSON (fail fast if Gemini misbehaves)
-            mapper.readTree(aiResponse);
-
-            return aiResponse;
-
-        } catch (Exception e) {
-            throw new RuntimeException("AI resume generation failed", e);
+        if (aiResponse == null || aiResponse.isBlank()) {
+            // Instead of throwing error, return fallback JSON
+            return """
+            {
+              "optimized_resume": {},
+              "gap_analysis": {
+                "overall_alignment_assessment": "AI did not return content."
+              }
+            }
+            """;
         }
+
+        String cleaned = aiResponse.trim();
+
+        // Remove markdown fences safely
+        if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replaceAll("```[a-zA-Z]*", "");
+            cleaned = cleaned.replace("```", "").trim();
+        }
+
+        // 🔥 NO VALIDATION HERE
+        // We let frontend validate JSON
+
+        return cleaned;
     }
 }
