@@ -8,15 +8,21 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/placementgo
     username: postgres
-    password: root
+    password: 1234
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
     properties:
       hibernate:
         format_sql: true
+
+jd-intel:
+  search-api-key: ${SEARCH_API_KEY:your-serp-api-key-here}
+  search-engine-id: ${SEARCH_ENGINE_ID:your-search-engine-id-here}
+
 gemini:
   api-key: galti se key add na kare yaha per
   base-url: https://generativelanguage.googleapis.com/v1beta
