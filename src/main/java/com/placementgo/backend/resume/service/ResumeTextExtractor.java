@@ -4,15 +4,16 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Component
 public class ResumeTextExtractor {
 
     private final Tika tika = new Tika();
+    public String extractText(InputStream inputStream)
+            throws IOException, TikaException {
 
-    public String extractText(File file) throws IOException, TikaException {
-        return tika.parseToString(file);
+        return tika.parseToString(inputStream);
     }
 }
