@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -21,13 +20,12 @@ public class ResumeParsingService {
 
     /**
      * ✅ SYNCHRONOUS parsing (used in uploadAndGenerate flow)
+     * Now fully in-memory (no file saving)
      */
-    public String parse(Path filePath) throws Exception {
+    public String parse(InputStream inputStream) throws Exception {
 
-        File file = filePath.toFile();
-
-        // 1️⃣ Extract raw text
-        String rawText = textExtractor.extractText(file);
+        // 1️⃣ Extract raw text directly from InputStream
+        String rawText = textExtractor.extractText(inputStream);
 
         // 2️⃣ Convert to structured JSON
         return structurer.structure(rawText);
@@ -35,10 +33,12 @@ public class ResumeParsingService {
 
 
     /**
-     * ✅ OPTIONAL ASYNC parsing (for future scaling)
+     * ⚠️ OPTIONAL ASYNC parsing
+     * If you want async later, you should store file in S3
+     * and fetch stream from there instead of local path.
      */
     @Async
-    public void parseAsync(UUID resumeId) {
+    public void parseAsync(UUID resumeId, InputStream inputStream) {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow();
@@ -47,9 +47,7 @@ public class ResumeParsingService {
             resume.setStatus(ResumeStatus.PARSING);
             resumeRepository.save(resume);
 
-            File file = new File(resume.getStoredFilePath());
-
-            String rawText = textExtractor.extractText(file);
+            String rawText = textExtractor.extractText(inputStream);
             String parsedJson = structurer.structure(rawText);
 
             resume.setParsedJson(parsedJson);
