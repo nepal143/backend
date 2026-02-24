@@ -63,7 +63,7 @@ public class ResumeService {
 
         log.info("✅ Resume parsed successfully.");
 
-        int maxRetries = 2;
+        int maxRetries = 1;
         String latexContent = null;
         String base64Pdf = null;
 
