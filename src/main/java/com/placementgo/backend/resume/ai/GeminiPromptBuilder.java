@@ -20,89 +20,97 @@ public class GeminiPromptBuilder {
     public String buildLatexPrompt(String parsedResumeJson, String jobDescription) {
 
         String mainTex = loadFile("tempDir/main.tex");
-        String classFile = loadFile("tempDir/tccv.cls");
 
         return """
-You are an elite resume strategist and LaTeX engineer.
+You are a STRICT LaTeX content editor.
 
-Your task:
-Generate a HIGH-IMPACT, ATS-OPTIMIZED, STRICTLY ONE-PAGE resume that compiles cleanly without layout issues.
-
-========================================================
-CRITICAL PAGE & LAYOUT SAFETY RULES (MANDATORY)
-========================================================
-
-- The resume MUST fit on EXACTLY ONE PAGE.
-- It MUST NOT overflow to a second page.
-- It MUST NOT cause text overlapping.
-- It MUST NOT overflow margins.
-- It MUST NOT break layout alignment.
-- It MUST NOT modify font sizes.
-- It MUST NOT insert \\vspace, \\hspace, or spacing hacks.
-- It MUST NOT alter margins or geometry.
-- It MUST NOT modify documentclass.
-- It MUST NOT modify layout structure.
-- It MUST use only safe standard section content replacement.
-- It MUST compile cleanly with pdflatex without warnings that cause layout distortion.
-
-If content exceeds one page:
-- Aggressively compress content.
-- Reduce bullet length.
-- Remove low-value achievements.
-- Keep only the most job-relevant experience.
-- Limit each job to maximum 3 concise bullets.
-- Limit projects to most relevant 2–3.
-- Summary must not exceed 3 lines.
+Your job is NOT to redesign the template.
+Your job is ONLY to replace content inside the provided LaTeX template.
 
 ========================================================
-CONTENT INTELLIGENCE RULES
+CRITICAL: DO NOT MODIFY STRUCTURE
 ========================================================
 
-- You have freedom to decide section headings.
-- You may reorder sections strategically.
-- You may rename sections to better match the job.
-- Prioritize content that aligns strongly with the job description.
-- Remove irrelevant information.
-- Use strong action verbs.
-- Include measurable impact where possible.
-- Naturally integrate important job keywords.
+- DO NOT change \\documentclass
+- DO NOT add or remove packages
+- DO NOT add new commands
+- DO NOT define new environments
+- DO NOT modify spacing
+- DO NOT modify margins
+- DO NOT modify fonts
+- DO NOT modify layout
+- DO NOT remove existing environments
+- DO NOT introduce new custom macros
+
+You may ONLY replace placeholder content with improved content.
+
+If the template contains custom commands, use them exactly as-is.
+Do NOT invent commands like:
+\\resumeItem
+\\resumeSubheading
+\\resumeSection
+or any other undefined command.
 
 ========================================================
-OUTPUT RESTRICTIONS
+STRICT LATEX SAFETY RULES
 ========================================================
 
-- Modify ONLY content areas inside the template.
-- DO NOT add new packages.
-- DO NOT create new environments.
-- DO NOT include comments.
-- DO NOT include explanations.
-- DO NOT wrap in markdown.
-- Output must start with \\documentclass and end with \\end{document}.
-- Output must compile to a SINGLE PAGE PDF with no layout corruption.
+You MUST escape these characters in normal text:
+
+&  → \\&
+%% → \\%%
+$  → \\$
+#  → \\#
+_  → \\_
+{  → \\{
+}  → \\}
+~  → \\textasciitilde{}
+^  → \\textasciicircum{}
+
+- All braces must be balanced.
+- No runaway arguments.
+- No raw URLs (use \\href if already used in template).
+- No unclosed environments.
+- No nested commands inside macro arguments unless already present in template.
 
 ========================================================
-CLASS FILE (tccv.cls)
+PAGE RULES
+========================================================
+
+- Resume must remain ONE PAGE.
+- Maximum 3 bullet points per role.
+- Maximum 3 lines summary.
+- Keep content concise and ATS optimized.
+
+If content is too long, compress intelligently.
+
+========================================================
+INPUT TEMPLATE (DO NOT MODIFY STRUCTURE)
 ========================================================
 %s
 
 ========================================================
-TEMPLATE FILE (main.tex)
+PARSED RESUME DATA (SOURCE CONTENT)
 ========================================================
 %s
 
 ========================================================
-PARSED RESUME JSON
+JOB DESCRIPTION (OPTIMIZATION TARGET)
 ========================================================
 %s
 
 ========================================================
-JOB DESCRIPTION
+FINAL INSTRUCTION
 ========================================================
-%s
 
-Return ONLY valid, safe, single-page LaTeX code.
+Return the FULL LaTeX document.
+Start with \\documentclass.
+End with \\end{document}.
+Return ONLY valid LaTeX.
+No markdown.
+No explanation.
+No comments.
 """
-                .formatted(classFile, mainTex, parsedResumeJson, jobDescription);
+                .formatted(mainTex, parsedResumeJson, jobDescription);
     }
-
 }
