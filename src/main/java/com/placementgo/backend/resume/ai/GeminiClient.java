@@ -16,65 +16,67 @@ public class GeminiClient {
     private final WebClient webClient;
     private final ObjectMapper mapper = new ObjectMapper();
     private final GeminiProperties props;
+    private final GroqRateLimiter rateLimiter;
 
-    public GeminiClient(GeminiProperties props) {
+    public GeminiClient(GeminiProperties props, GroqRateLimiter rateLimiter) {
         this.props = props;
+        this.rateLimiter = rateLimiter;
         this.webClient = WebClient.builder()
                 .baseUrl(props.getBaseUrl())
-                .defaultHeader("X-goog-api-key", props.getApiKey())
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + props.getApiKey())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
     public String generateContent(String prompt) {
 
-        log.info("📡 Sending request to Gemini model: {}", props.getModel());
+        log.info("📡 Sending request to Groq model: {}", props.getModel());
         log.info("🌍 Base URL: {}", props.getBaseUrl());
 
         try {
 
             String requestBody = """
         {
-          "contents": [
-            {
-              "parts": [
-                { "text": %s }
-              ]
-            }
-          ]
+          "model": "%s",
+          "messages": [
+            { "role": "user", "content": %s }
+          ],
+          "temperature": %s,
+          "max_tokens": 4000
         }
-        """.formatted(mapper.writeValueAsString(prompt));
+        """.formatted(props.getModel(), mapper.writeValueAsString(prompt), props.getTemperature());
+
+            int estimatedTokens = rateLimiter.estimateTokens(requestBody);
+            rateLimiter.acquireTokens(estimatedTokens);
 
             log.info("📤 Request body size: {} chars", requestBody.length());
 
             JsonNode response = webClient.post()
-                    .uri("/models/{model}:generateContent", props.getModel())
+                    .uri("/chat/completions")
                     .bodyValue(requestBody)
                     .retrieve()
                     .onStatus(
                             status -> status.isError(),
                             clientResponse -> {
-                                log.error("❌ Gemini returned HTTP error: {}", clientResponse.statusCode());
+                                log.error("❌ Groq returned HTTP error: {}", clientResponse.statusCode());
                                 return clientResponse.bodyToMono(String.class)
-                                        .map(body -> new RuntimeException("Gemini error body: " + body));
+                                        .map(body -> new RuntimeException("Gemini API call failed: " + body));
                             }
                     )
                     .bodyToMono(JsonNode.class)
                     .block();
 
             if (response == null) {
-                throw new RuntimeException("Gemini returned null response");
+                throw new RuntimeException("Gemini API call failed");
             }
 
-            log.info("📥 Gemini response received");
+            log.info("📥 Groq response received");
 
             return response
-                    .path("candidates")
+                    .path("choices")
                     .get(0)
+                    .path("message")
                     .path("content")
-                    .path("parts")
-                    .get(0)
-                    .path("text")
                     .asText();
 
         } catch (Exception e) {

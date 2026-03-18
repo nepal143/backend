@@ -1,0 +1,151 @@
+%--- Elegant Teal Resume Template ---
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+
+% Color palette — no hyphens in color names
+\definecolor{tealprimary}{RGB}{15,118,110}
+\definecolor{teallight}{RGB}{204,235,233}
+\definecolor{darkgray}{gray}{0.25}
+\definecolor{midgray}{gray}{0.45}
+\definecolor{textbase}{gray}{0.06}
+
+% Page style
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\footskip}{10pt}
+
+% Margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{0in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Section headers: teal color, small-caps, with a 1pt rule below
+\titleformat{\section}{
+  \color{tealprimary}\bfseries\scshape\vspace{2pt}\raggedright\large
+}{}{0em}{}[{\color{tealprimary}\titlerule[1pt]}\vspace{-4pt}]
+
+% Custom commands — identical macro names, new visual style
+\newcommand{\resumeItem}[1]{
+  \item\small{#1 \vspace{-1pt}}
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\color{textbase}#1} & {\color{midgray}\small #2} \\
+      \textit{\small\color{darkgray}#3} & {\color{midgray}\small #4} \\
+    \end{tabular*}\vspace{-4pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+  \item
+    \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
+      \textbf{\color{textbase}#1} & {\color{midgray}\small #2} \\
+    \end{tabular*}\vspace{-4pt}
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0in,label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in,label={\color{tealprimary}\small\textbullet}]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{0pt}}
+
+\color{textbase}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge\bfseries\color{tealprimary} Your Name} \\[4pt]
+    \small
+    \href{mailto:you@email.com}{\texttt{you@email.com}}
+    \hspace{4pt}{\color{tealprimary}|}\hspace{4pt}
+    \texttt{+1 555 555 5555}
+    \hspace{4pt}{\color{tealprimary}|}\hspace{4pt}
+    \href{https://linkedin.com/in/yourprofile}{\texttt{linkedin.com/in/yourprofile}}
+    \hspace{4pt}{\color{tealprimary}|}\hspace{4pt}
+    City, State
+\end{center}
+
+\vspace{-6pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+\resumeSubHeadingListStart
+
+\resumeSubheading
+{University Name}{Aug. 2018 -- May 2022}
+{Bachelor of Science in Computer Science}{City, State}
+
+\resumeSubHeadingListEnd
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+\resumeSubHeadingListStart
+
+\resumeSubheading
+{Company Name}{Jun. 2022 -- Present}
+{Software Engineer}{City, State}
+\resumeItemListStart
+\resumeItem{Led development of a customer-facing feature used by 500k users, reducing load time by 35\%}
+\resumeItem{Collaborated with 4 cross-functional teams to deliver a platform migration on schedule}
+\resumeItem{Automated CI/CD pipeline reducing deployment time from 45 minutes to 8 minutes}
+\resumeItemListEnd
+
+\resumeSubheading
+{Internship Co.}{May 2021 -- Aug. 2021}
+{Software Engineering Intern}{Remote}
+\resumeItemListStart
+\resumeItem{Built REST APIs consumed by 3 internal services with 99.9\% uptime}
+\resumeItem{Improved database query performance by 40\% through index optimization}
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+\resumeSubHeadingListStart
+
+\resumeProjectHeading
+{\textbf{Project Name} $|$ \textit{React, Node.js, PostgreSQL}}{Jan. 2023}
+\resumeItemListStart
+\resumeItem{Designed and built a full-stack application serving 200 daily active users}
+\resumeItem{Implemented JWT authentication and role-based access control}
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%-----------SKILLS-----------
+\section{Skills}
+\begin{itemize}[leftmargin=0in,label={}]
+  \small{\item{
+    \textbf{Languages:} Python, Java, JavaScript, TypeScript, SQL \\
+    \textbf{Frameworks:} React, Spring Boot, Node.js, FastAPI \\
+    \textbf{Tools:} Git, Docker, AWS, PostgreSQL, Redis
+  }}
+\end{itemize}
+
+\end{document}
