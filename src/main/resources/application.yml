@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/placementgo
     username: postgres
-    password: root
+    password: 1234
 
   jpa:
     hibernate:
@@ -24,7 +24,7 @@ jd-intel:
   search-engine-id: ${SEARCH_ENGINE_ID:your-search-engine-id-here}
 
 gemini:
-  api-key: AIzaSyDE4AMdKTwMlzGzmTr0H5qXTUyrvCnD6mU
+  api-key: galti se key add na kare yaha per
   base-url: https://generativelanguage.googleapis.com/v1beta
   model: gemini-2.5-flash
   temperature: 0.2

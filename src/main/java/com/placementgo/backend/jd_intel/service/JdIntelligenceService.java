@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,46 +23,87 @@ public class JdIntelligenceService {
         private final LlmExtractionService llmExtractionService;
         private final InterviewInsightRepository repository;
 
-        public JdAnalysisResponse analyze(JdAnalysisRequest request) {
-                log.info("Starting JD Analysis for {} - {}", request.getCompany(), request.getRole());
+        // 🔥 Controlled thread pool (better than default)
+        private final ExecutorService executor = Executors.newFixedThreadPool(5);
 
-                // 1. Generate Search Queries
+        public JdAnalysisResponse analyze(JdAnalysisRequest request) {
+
+                log.info("🚀 Starting JD Analysis for {} - {}", request.getCompany(), request.getRole());
+
+                // 1️⃣ Generate Search Queries
                 List<String> queries = generateQueries(request);
 
-                // 2. Search for URLs (Parallel)
+                // 2️⃣ Search URLs
                 List<String> urls = queries.parallelStream()
                                 .map(searchService::search)
                                 .flatMap(List::stream)
                                 .distinct()
-                                .limit(10) // Limit to top 10 unique URLs to avoid overloading
+                                .limit(10)
                                 .collect(Collectors.toList());
 
-                log.info("Found {} URLs to scrape", urls.size());
+                log.info("🔍 Found {} URLs to scrape", urls.size());
 
-                // 3. Scrape Content (Parallel)
-                StringBuilder aggregatedContent = new StringBuilder();
+                // 3️⃣ Scrape Content (Parallel + Timeout + Filtering)
+                String aggregatedContent = scrapeContent(urls);
 
-                List<CompletableFuture<String>> futures = urls.stream()
-                                .map(url -> CompletableFuture.supplyAsync(() -> scrapingService.scrape(url)))
-                                .toList();
+                log.info("📄 Aggregated content length: {}", aggregatedContent.length());
 
-                futures.stream()
-                                .map(CompletableFuture::join)
-                                .forEach(content -> aggregatedContent.append(content).append("\n\n"));
-
-                // 4. Extract Insights using LLM
+                // 4️⃣ Extract Insights via LLM
                 JdAnalysisResponse response = llmExtractionService.extractInsights(
-                                aggregatedContent.toString(),
+                                aggregatedContent,
                                 request.getCompany(),
                                 request.getRole(),
                                 request.getJobDescription());
 
-                // 5. Save to DB
+                // 5️⃣ Save to DB
                 saveInsight(request, response);
 
                 return response;
         }
 
+        // 🔥 Improved scraping pipeline
+        private String scrapeContent(List<String> urls) {
+
+                if (urls == null || urls.isEmpty()) {
+                        log.warn("⚠️ No URLs found, skipping scraping.");
+                        return "";
+                }
+
+                List<CompletableFuture<String>> futures = urls.stream()
+                                .map(url -> CompletableFuture.supplyAsync(() -> {
+                                        try {
+                                                String content = scrapingService.scrape(url);
+
+                                                if (content == null || content.isBlank()) {
+                                                        return "";
+                                                }
+
+                                                // 🔥 Filter noisy content
+                                                if (content.length() < 200) {
+                                                        return "";
+                                                }
+
+                                                return content;
+
+                                        } catch (Exception e) {
+                                                log.warn("⚠️ Failed scraping URL: {} | {}", url, e.getMessage());
+                                                return "";
+                                        }
+                                }, executor).orTimeout(10, TimeUnit.SECONDS)
+                                                .exceptionally(ex -> {
+                                                        log.warn("⏱️ Timeout or error while scraping: {}",
+                                                                        ex.getMessage());
+                                                        return "";
+                                                }))
+                                .toList();
+
+                return futures.stream()
+                                .map(CompletableFuture::join)
+                                .filter(content -> !content.isBlank())
+                                .collect(Collectors.joining("\n\n"));
+        }
+
+        // 💾 Save important insights
         private void saveInsight(JdAnalysisRequest request, JdAnalysisResponse response) {
                 try {
                         InterviewInsight insight = InterviewInsight.builder()
@@ -73,26 +114,34 @@ public class JdIntelligenceService {
                                         .behavioralQuestions(response.getBehavioralQuestions())
                                         .codingFocus(response.getCodingFocus())
                                         .systemDesignFocus(response.getSystemDesignFocus())
-                                        .predictedRounds(response.getPredictedRounds())
                                         .difficultyLevel(response.getDifficultyLevel())
                                         .rejectionReasons(response.getRejectionReasons())
                                         .companyTips(response.getCompanyTips())
                                         .build();
 
                         repository.save(insight);
-                        log.info("Saved InterviewInsight for {} - {}", request.getCompany(), request.getRole());
+
+                        log.info("💾 Saved InterviewInsight for {} - {}", request.getCompany(), request.getRole());
+
                 } catch (Exception e) {
-                        log.error("Failed to save InterviewInsight: {}", e.getMessage());
+                        log.error("❌ Failed to save InterviewInsight: {}", e.getMessage());
                 }
         }
 
+        // 🔎 Better query generation
         private List<String> generateQueries(JdAnalysisRequest request) {
+
+                String company = request.getCompany();
+                String role = request.getRole();
+
                 List<String> queries = new ArrayList<>();
-                String base = request.getCompany() + " " + request.getRole() + " interview experience";
-                queries.add(base);
-                queries.add(request.getCompany() + " " + request.getRole() + " interview questions");
-                queries.add(request.getCompany() + " " + request.getRole() + " leetcode discuss");
-                queries.add(request.getCompany() + " " + request.getRole() + " geeksforgeeks");
+
+                queries.add(company + " " + role + " interview experience");
+                queries.add(company + " " + role + " interview questions");
+                queries.add(company + " " + role + " leetcode discuss");
+                queries.add(company + " " + role + " geeksforgeeks interview");
+                queries.add(company + " " + role + " glassdoor interview");
+
                 return queries;
         }
 }
