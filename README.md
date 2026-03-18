@@ -1,7 +1,6 @@
 # PLACEMENTgO
+
 PlacementGo is a Java-based web application that helps job seekers apply smarter by customizing resumes using job descriptions, enabling LinkedIn-assisted referral discovery, and tracking applications through a centralized dashboard powered by AI and scalable Spring Boot architecture.
-
-
 
 # PlacementGo Backend
 
@@ -11,15 +10,15 @@ This repository contains the **Spring Boot backend** for the PlacementGo project
 
 ## Tech Stack
 
-* Java 17
-* Spring Boot 3.x
-* Maven (with Maven Wrapper)
-* Spring Web
-* Spring Data JPA
-* Spring Security (currently relaxed for local dev)
-* PostgreSQL 16.x
-* Flyway (DB migrations)
-* Swagger / OpenAPI (springdoc)
+- Java 17
+- Spring Boot 3.x
+- Maven (with Maven Wrapper)
+- Spring Web
+- Spring Data JPA
+- Spring Security (currently relaxed for local dev)
+- PostgreSQL 16.x
+- Flyway (DB migrations)
+- Swagger / OpenAPI (springdoc)
 
 ---
 
@@ -27,9 +26,9 @@ This repository contains the **Spring Boot backend** for the PlacementGo project
 
 Make sure the following are installed on your system:
 
-* **Java 17** (check with `java -version`)
-* **PostgreSQL 16.x**
-* Git (optional, for cloning)
+- **Java 17** (check with `java -version`)
+- **PostgreSQL 16.x**
+- Git (optional, for cloning)
 
 > ⚠️ Maven installation is **NOT required**. The project uses **Maven Wrapper (`mvnw`)**.
 
@@ -91,7 +90,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/placementgo
     username: postgres
-    password: <your_password>
+    password: 1234
 
   jpa:
     hibernate:
@@ -134,18 +133,18 @@ http://localhost:8080/swagger-ui/index.html
 
 Swagger shows:
 
-* All available APIs
-* Request / response schemas
-* Ability to test APIs directly
+- All available APIs
+- Request / response schemas
+- Ability to test APIs directly
 
 ---
 
 ## Important Notes
 
-* This project is **backend only**. There is no frontend/UI in this repo.
-* `/` (root URL) may return 404 if no controller is mapped — this is expected.
-* Swagger is enabled for **development only**.
-* Flyway automatically runs DB migrations on startup.
+- This project is **backend only**. There is no frontend/UI in this repo.
+- `/` (root URL) may return 404 if no controller is mapped — this is expected.
+- Swagger is enabled for **development only**.
+- Flyway automatically runs DB migrations on startup.
 
 ---
 
@@ -161,9 +160,9 @@ Use Maven Wrapper instead:
 
 ### 2. PostgreSQL connection refused
 
-* Ensure PostgreSQL service is running
-* Check port (default: 5432)
-* Verify username/password in `application.yml`
+- Ensure PostgreSQL service is running
+- Check port (default: 5432)
+- Verify username/password in `application.yml`
 
 ### 3. Swagger returns 404
 
@@ -192,12 +191,11 @@ Ensure this dependency exists in `pom.xml`:
 
 ## Status
 
-* Backend setup: ✅
-* DB + Flyway: ✅
-* Swagger: ✅
-* Auth & modules: 🚧 In progress
+- Backend setup: ✅
+- DB + Flyway: ✅
+- Swagger: ✅
+- Auth & modules: 🚧 In progress
 
 ---
 
 If the app starts and Swagger loads, the setup is correct.
-

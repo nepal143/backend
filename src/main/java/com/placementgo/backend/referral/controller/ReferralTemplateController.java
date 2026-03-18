@@ -1,6 +1,6 @@
 package com.placementgo.backend.referral.controller;
 
-import com.placementgo.backend.referral.service.ReferralTemplateService;
+import com.placementgo.backend.referral.service.ReferralService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +12,10 @@ import java.util.UUID;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ReferralTemplateController {
 
-    private final ReferralTemplateService service;
+    private final ReferralService service;
 
     @GetMapping
     public Object getTemplates(@PathVariable UUID id) {
-        return service.getTemplates(id);
+        return service.getById(id);  // ✅ ReferralService ka getById use karo
     }
 }

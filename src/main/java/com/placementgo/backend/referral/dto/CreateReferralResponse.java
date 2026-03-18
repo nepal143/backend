@@ -6,13 +6,13 @@ import lombok.Data;
 import java.util.Map;
 import java.util.UUID;
 
-@Data
-@Builder
+@Data    // ✅
+@Builder // ✅
 public class CreateReferralResponse {
     private UUID referralId;
     private String shareLink;
     private String linkedinSearchLink;
     private Map<String, String> templates;
-    private String company;  // ✅ Add this
-    private String role;     // ✅ Add this
+    private String company;
+    private String role;
 }

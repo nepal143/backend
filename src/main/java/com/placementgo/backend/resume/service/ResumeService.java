@@ -64,7 +64,7 @@ public class ResumeService {
 
         log.info("✅ Resume parsed successfully.");
 
-        int maxRetries = 1;
+        int maxRetries = 3;
         String latexContent = null;
         String base64Pdf = null;
 
@@ -88,9 +88,11 @@ public class ResumeService {
                 // 2️⃣ Create temp runtime directory
                 runtimeDir = Files.createTempDirectory("latex-runtime-");
 
-                // Write main.tex
+                // Write main.tex — always use the known-good template preamble + AI body only
+                // (prevents broken \newcommand definitions the AI sometimes regenerates)
                 Path texFile = runtimeDir.resolve("main.tex");
-                Files.writeString(texFile, latexContent, StandardCharsets.UTF_8);
+                String finalLatex = buildFinalLatex(latexContent, templateId);
+                Files.writeString(texFile, finalLatex, StandardCharsets.UTF_8);
 
                 // Copy required class file
                 ClassPathResource classResource =
@@ -149,7 +151,7 @@ public class ResumeService {
                 break; // SUCCESS
 
             } catch (Exception e) {
-                log.warn("⚠️ Attempt {} failed: {}", attempt, e.getMessage());
+                log.warn("⚠️ Attempt {} failed: [{}] {}", attempt, e.getClass().getName(), e.getMessage(), e);
             } finally {
                 // ✅ Cleanup temp directory
                 if (runtimeDir != null && Files.exists(runtimeDir)) {
@@ -175,6 +177,52 @@ public class ResumeService {
         log.info("🎉 Resume generation pipeline completed successfully.");
 
         return new GenerateResumeResponse(latexContent, base64Pdf);
+    }
+
+    /**
+     * Combines the known-good template preamble with only the body from AI output.
+     * This prevents the AI from regenerating broken \newcommand definitions in the preamble.
+     */
+    private String buildFinalLatex(String aiLatex, String templateId) {
+        try {
+            String templateFile = switch (templateId == null ? "classic" : templateId.toLowerCase()) {
+                case "modern"   -> "tempDir/modern.tex";
+                case "compact"  -> "tempDir/compact.tex";
+                case "elegant"  -> "tempDir/elegant.tex";
+                case "sharp"    -> "tempDir/sharp.tex";
+                default         -> "tempDir/main.tex";
+            };
+            ClassPathResource templateResource = new ClassPathResource(templateFile);
+            String templateContent;
+            try (InputStream is = templateResource.getInputStream()) {
+                templateContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+
+            // Grab everything up to and including \begin{document}
+            int preambleEnd = templateContent.indexOf("\\begin{document}");
+            String preamble = (preambleEnd >= 0)
+                    ? templateContent.substring(0, preambleEnd + "\\begin{document}".length())
+                    : templateContent;
+
+            // Extract body from AI output (between \begin{document} and \end{document})
+            String body;
+            int aiBodyStart = aiLatex.indexOf("\\begin{document}");
+            int aiBodyEnd   = aiLatex.lastIndexOf("\\end{document}");
+            if (aiBodyStart >= 0 && aiBodyEnd > aiBodyStart) {
+                body = aiLatex.substring(aiBodyStart + "\\begin{document}".length(), aiBodyEnd).trim();
+            } else if (aiBodyStart >= 0) {
+                body = aiLatex.substring(aiBodyStart + "\\begin{document}".length()).trim();
+            } else {
+                // AI skipped preamble entirely — use its full output as body
+                body = aiLatex.trim();
+            }
+
+            return preamble + "\n" + body + "\n\\end{document}";
+
+        } catch (Exception e) {
+            log.warn("⚠️ Could not load template preamble, using AI output as-is: {}", e.getMessage());
+            return aiLatex;
+        }
     }
 
     public Resume getResumeById(UUID resumeId) {

@@ -2,132 +2,105 @@ package com.placementgo.backend.referral.service;
 
 import com.placementgo.backend.referral.dto.CreateReferralRequest;
 import com.placementgo.backend.referral.dto.CreateReferralResponse;
-import com.placementgo.backend.referral.dto.ReferralSummaryResponse;
-import com.placementgo.backend.referral.entity.ReferralRequest;
 import com.placementgo.backend.referral.entity.ReferralTemplate;
 import com.placementgo.backend.referral.enums.TemplateType;
-import com.placementgo.backend.referral.repository.ReferralRequestRepository;
 import com.placementgo.backend.referral.repository.ReferralTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ReferralService {
 
-    private final ReferralRequestRepository referralRepository;
     private final ReferralTemplateRepository templateRepository;
-    private final LinkedInLinkService linkedInLinkService;
-    private final JobParserService jobParserService;
 
-    private static final String BASE_SHARE_URL = "http://localhost:8080/r/";
+    public CreateReferralResponse createReferral(UUID userId, CreateReferralRequest req) {
+        String company = req.getCompany();
+        String role = req.getRole();
 
-    public CreateReferralResponse createReferral(UUID userId, CreateReferralRequest request) {
+        String linkedinSearchLink = "https://www.linkedin.com/search/results/people/?keywords="
+                + URLEncoder.encode(role + " " + company, StandardCharsets.UTF_8);
 
-        JobParserService.JobDetails jobDetails = jobParserService.parseJobDescription(request.getJobDescription());
-        String company = jobDetails.getCompany();
-        String role = jobDetails.getRoleTitle();
+        UUID referralId = UUID.randomUUID();
+        String shareLink = "https://placementgo.com/r/" + referralId;
 
-        String linkedinLink = linkedInLinkService.generateSearchLink(company, role);
-        String token = UUID.randomUUID().toString().substring(0, 8);
+        Map<TemplateType, String> templateMessages = buildTemplates(company, role);
 
-        ReferralRequest referral = ReferralRequest.builder()
-                .userId(userId)
-                .jobDescription(request.getJobDescription())
-                .company(company)
-                .role(role)
-                .linkedinSearchLink(linkedinLink)
-                .token(token)
-                .createdAt(Instant.now())
-                .build();
+        List<ReferralTemplate> templateEntities = templateMessages.entrySet().stream()
+                .map(entry -> ReferralTemplate.builder()
+                        .referralId(referralId)
+                        .type(entry.getKey())
+                        .message(entry.getValue())
+                        .version(1)
+                        .build())
+                .collect(Collectors.toList());
 
-        referralRepository.save(referral);
+        templateRepository.saveAll(templateEntities);
 
-        List<ReferralTemplate> templates = generateTemplates(referral.getId(), company, role);
-        templateRepository.saveAll(templates);
-
-        Map<String, String> templateMap = new HashMap<>();
-        for (ReferralTemplate t : templates) {
-            templateMap.put(t.getType().name(), t.getMessage());
-        }
+        Map<String, String> templatesForResponse = templateMessages.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().name(),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
 
         return CreateReferralResponse.builder()
-                .referralId(referral.getId())
-                .shareLink(BASE_SHARE_URL + token)
-                .linkedinSearchLink(linkedinLink)
-                .templates(templateMap)
+                .referralId(referralId)
                 .company(company)
                 .role(role)
+                .linkedinSearchLink(linkedinSearchLink)
+                .shareLink(shareLink)
+                .templates(templatesForResponse)
                 .build();
     }
 
-    private List<ReferralTemplate> generateTemplates(UUID referralId, String company, String role) {
-        List<ReferralTemplate> list = new ArrayList<>();
-
-        list.add(ReferralTemplate.builder()
-                .referralId(referralId)
-                .type(TemplateType.SHORT)
-                .message("Hi [Name],\n\nI saw you're at " + company + ". I'm applying for the " + role + " position and would love to connect!\n\nBest,\n[Your Name]")
-                .version(1)
-                .build());
-
-        list.add(ReferralTemplate.builder()
-                .referralId(referralId)
-                .type(TemplateType.PROFESSIONAL)
-                .message("Hello [Name],\n\nI noticed you work at " + company + " and wanted to reach out regarding the " + role + " position I'm applying for.\n\nI'd appreciate any insights you could share about the team and role.\n\nThank you,\n[Your Name]")
-                .version(1)
-                .build());
-
-        list.add(ReferralTemplate.builder()
-                .referralId(referralId)
-                .type(TemplateType.CASUAL)
-                .message("Hey [Name]!\n\nI'm applying for the " + role + " role at " + company + " and would love to chat about your experience there.\n\nWould you be open to a quick coffee chat?\n\nCheers,\n[Your Name]")
-                .version(1)
-                .build());
-
-        return list;
+    public Object getAll(UUID userId) {
+        return null;
     }
 
-    public List<ReferralSummaryResponse> getAll(UUID userId) {
-        List<ReferralRequest> referrals = referralRepository.findByUserId(userId);
-        List<ReferralSummaryResponse> responses = new ArrayList<>();
-
-        for (ReferralRequest r : referrals) {
-            responses.add(ReferralSummaryResponse.builder()
-                    .referralId(r.getId())
-                    .shareLink(BASE_SHARE_URL + r.getToken())
-                    .createdAt(r.getCreatedAt())
-                    .build());
-        }
-        return responses;
-    }
-
-    public CreateReferralResponse getById(UUID id) {
-        ReferralRequest referral = referralRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Referral not found"));
-
-        List<ReferralTemplate> templates = templateRepository.findByReferralId(id);
-        Map<String, String> templateMap = new HashMap<>();
-
-        for (ReferralTemplate t : templates) {
-            templateMap.put(t.getType().name(), t.getMessage());
-        }
-
-        return CreateReferralResponse.builder()
-                .referralId(referral.getId())
-                .shareLink(BASE_SHARE_URL + referral.getToken())
-                .linkedinSearchLink(referral.getLinkedinSearchLink())
-                .templates(templateMap)
-                .company(referral.getCompany())
-                .role(referral.getRole())
-                .build();
+    public Object getById(UUID id) {
+        return templateRepository.findByReferralId(id);
     }
 
     public Object getByToken(String token) {
-        ReferralRequest referral = referralRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid referral token"));
-        return referral.getLinkedinSearchLink();
+        return null;
+    }
+
+    private Map<TemplateType, String> buildTemplates(String company, String role) {
+        Map<TemplateType, String> map = new LinkedHashMap<>();
+
+        map.put(TemplateType.FIRST_OUTREACH,
+            "Hi [Name],\n\n" +
+            "I came across your profile and noticed you work at " + company + " as a " + role + ". I'm really inspired by your journey!\n\n" +
+            "I'm currently applying for the " + role + " position at " + company + " and would love to hear about your experience there — the culture, the team, and what it's like day-to-day.\n\n" +
+            "Would you be open to a quick 10–15 min chat? It would mean a lot to me.\n\n" +
+            "Best,\n[Your Name]"
+        );
+
+        map.put(TemplateType.REFERRAL_REQUEST,
+            "Hi [Name],\n\n" +
+            "Hope you're doing well! I'm reaching out because I'm very excited about the " + role + " opening at " + company + " and I believe I'd be a great fit.\n\n" +
+            "I have [X years] of experience in [relevant skill/domain] and have worked on [brief achievement]. I'd be grateful if you could refer me internally or point me in the right direction.\n\n" +
+            "I've attached my resume for your reference. Happy to share more details if needed!\n\n" +
+            "Thank you so much for your time.\n\n" +
+            "Best,\n[Your Name]"
+        );
+
+        map.put(TemplateType.FOLLOW_UP,
+            "Hi [Name],\n\n" +
+            "I wanted to follow up on my previous message — I know things get busy!\n\n" +
+            "I've officially submitted my application for the " + role + " role at " + company + " and I'm still very excited about the opportunity. If you're open to providing a referral or sharing any tips, I'd truly appreciate it.\n\n" +
+            "No worries at all if it's not possible — I just wanted to reach out one more time.\n\n" +
+            "Thanks again!\n\n" +
+            "Best,\n[Your Name]"
+        );
+
+        return map;
     }
 }

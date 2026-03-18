@@ -20,11 +20,11 @@ spring:
         format_sql: true
 
 jd-intel:
-  search-api-key: ${SEARCH_API_KEY:your-serp-api-key-here}
+  search-api-key: ${SEARCH_API_KEY:00ddb13fb9e9daf87bdcdb9f07569de56698d243fbf4f3da37e93b2720cddf7e}
   search-engine-id: ${SEARCH_ENGINE_ID:your-search-engine-id-here}
 
 gemini:
-  api-key: AIzaSyDNmiJip-8i1lN-bqDRiZFBsOcdjoaIR9U
+  api-key: AIzaSyDE4AMdKTwMlzGzmTr0H5qXTUyrvCnD6mU
   base-url: https://generativelanguage.googleapis.com/v1beta
   model: gemini-2.5-flash
   temperature: 0.2
