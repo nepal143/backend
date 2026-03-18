@@ -1,9 +1,7 @@
 package com.placementgo.backend.referral.enums;
 
 public enum TemplateType {
-
-    SHORT,
-    PROFESSIONAL,
-    CASUAL
-
+    FIRST_OUTREACH,
+    REFERRAL_REQUEST,
+    FOLLOW_UP
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder  // ✅ yeh hona chahiye — builder() yahi banata hai
 public class ReferralTemplate {
 
     @Id
@@ -28,5 +28,4 @@ public class ReferralTemplate {
     private String message;
 
     private int version;
-
 }
