@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.core.userdetails.UserDetails;
 
 
 @RestController
@@ -37,7 +38,7 @@ public class ResumeController {
             Authentication authentication
     ) throws Exception {
 
-        UUID userId = (UUID) authentication.getPrincipal();
+        UUID userId = UUID.fromString(((UserDetails) authentication.getPrincipal()).getUsername());
 
         GenerateResumeResponse response =
                 resumeService.uploadAndGenerate(userId, file, jobDescription, template);
@@ -50,7 +51,7 @@ public class ResumeController {
      */
     @GetMapping
     public ResponseEntity<List<ResumeSummaryResponse>> getUserResumes(Authentication authentication) {
-        UUID userId = (UUID) authentication.getPrincipal();
+        UUID userId = UUID.fromString(((UserDetails) authentication.getPrincipal()).getUsername());
         return ResponseEntity.ok(resumeService.getUserResumes(userId));
     }
 
@@ -63,7 +64,7 @@ public class ResumeController {
             @PathVariable UUID resumeId,
             Authentication authentication
     ) {
-        UUID userId = (UUID) authentication.getPrincipal();
+        UUID userId = UUID.fromString(((UserDetails) authentication.getPrincipal()).getUsername());
         Resume resume = resumeService.getResumeById(resumeId);
 
         if (!resume.getUserId().equals(userId)) {
@@ -81,7 +82,7 @@ public class ResumeController {
             @PathVariable UUID resumeId,
             Authentication authentication
     ) {
-        UUID userId = (UUID) authentication.getPrincipal();
+        UUID userId = UUID.fromString(((UserDetails) authentication.getPrincipal()).getUsername());
         resumeService.deleteResume(resumeId, userId);
         return ResponseEntity.noContent().build();
     }
