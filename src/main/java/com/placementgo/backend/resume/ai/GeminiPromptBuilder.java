@@ -172,14 +172,45 @@ The template is a FORMATTING REFERENCE ONLY. Treat the section list as flexible:
   (e.g. if it is a project-heavy role, move Projects above Experience).
 
 ========================================================
-ONE-PAGE BUDGET
+AGGRESSIVE CONTENT PRUNING — MANDATORY FOR ONE PAGE
 ========================================================
 
-- The final PDF must fit on exactly ONE page.
-- If space is tight: trim bullet points to 1-2 per role, drop the least relevant section.
-- If space remains after all real content is placed: add an extra relevant section (see above)
-  rather than padding bullets with hollow filler.
+You MUST actively remove content that does not help this candidate get THIS specific job.
+This is not optional. An overflowing resume is a FAILED output.
+
+WHAT TO CUT (in order of priority):
+1. ENTIRE PROJECTS that use zero technologies or skills mentioned in the job description.
+   → If a project has no overlap with the JD, delete it completely.
+2. BULLET POINTS within a role that describe work completely unrelated to the JD.
+   → Keep only bullets that mention skills, tools, or responsibilities from the JD.
+3. ENTIRE JOB ROLES if that position has no relevance to the target role.
+   → If an old job has nothing to do with the JD, remove the whole entry.
+4. EXTRA SECTIONS (certifications, awards, etc.) if they don't add JD-relevant value.
+5. SKILLS that are not mentioned anywhere in the job description and are not core industry skills.
+
+WHAT TO NEVER CUT:
+- Most recent 1-2 job roles (even if only partially relevant — keep and tailor them).
+- Education section.
+- Any skill, project, or bullet that directly matches a JD requirement.
+
+BULLET POINT LIMITS (enforce strictly):
+- Maximum 3 bullets per job role.
+- Maximum 2 bullets per project.
+- If still overflowing: reduce to 2 bullets per role, 1 per project.
+
+========================================================
+ONE-PAGE BUDGET — THIS IS NON-NEGOTIABLE
+========================================================
+
+The final PDF MUST fit on exactly ONE page. There is NO acceptable reason for a second page.
+
+Mandatory space-saving rules:
+- Enforce the bullet point limits above — never exceed them.
+- Drop any section that is not adding real value for this job.
+- If still tight, reduce \\vspace between sections by adding \\vspace{-4pt} before section headings.
 - Never invent fake experience, education, or projects not present in the candidate's data.
+- If after removing everything low-priority the content still does not fit: further shorten
+  remaining bullet point text — cut wordy phrases, keep the impact keyword only.
 
 ========================================================
 INPUT TEMPLATE (FORMATTING REFERENCE — STRUCTURE ONLY)
