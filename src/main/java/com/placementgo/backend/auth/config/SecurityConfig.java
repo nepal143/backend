@@ -54,8 +54,12 @@ public class SecurityConfig {
                         // Public auth endpoints
                         .requestMatchers("/auth/**").permitAll()
 
+                        // Premium jobs public endpoints
+                        .requestMatchers("/api/v1/premium-jobs/search").permitAll()
+
                         // Everything else needs JWT
                         .anyRequest().authenticated())
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
