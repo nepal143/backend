@@ -31,6 +31,7 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final ResumeParsingService parsingService;
     private final AiResumeGenerator aiResumeGenerator;
+    private final AtsAnalysisService atsAnalysisService;
 
     public GenerateResumeResponse uploadAndGenerate(
             UUID userId,
@@ -188,7 +189,12 @@ public class ResumeService {
 
         log.info("🎉 Resume generation pipeline completed successfully.");
 
-        return new GenerateResumeResponse(latexContent, base64Pdf);
+        // Run ATS analysis on the parsed resume vs job description
+        log.info("🔍 Running ATS analysis...");
+        AtsAnalysisService.AtsResult atsResult = atsAnalysisService.analyze(parsedJson, jobDescription);
+        log.info("✅ ATS score: {}", atsResult.score());
+
+        return new GenerateResumeResponse(latexContent, base64Pdf, atsResult.score(), atsResult.suggestions());
     }
 
     /**
