@@ -62,3 +62,7 @@ resume:
     base-url: https://api.groq.com/openai/v1
     model: llama-3.3-70b-versatile
     temperature: 0.2
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_Sc9CZ9jM42rqxI}
+  key-secret: ${RAZORPAY_KEY_SECRET:3073xjbKcPnGVG089eMlAmoe}
