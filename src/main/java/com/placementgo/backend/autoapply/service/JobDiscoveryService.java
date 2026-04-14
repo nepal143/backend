@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.*;
 
 /**
@@ -77,20 +78,27 @@ public class JobDiscoveryService {
         String fullQuery = location != null && !location.isBlank()
                 ? query + " in " + location
                 : query;
-        String url = UriComponentsBuilder.fromUriString("https://jsearch.p.rapidapi.com/search")
+        // Use build().encode().toUri() to avoid double-encoding when RestTemplate
+        // re-processes a String URL (spaces become %2520 instead of %20).
+        URI uri = UriComponentsBuilder.fromUriString("https://jsearch.p.rapidapi.com/search")
                 .queryParam("query", fullQuery)
                 .queryParam("num_pages", "2")
-                .queryParam("date_posted", "week")
-                .toUriString();
+                .queryParam("date_posted", "month")
+                .build()
+                .encode()
+                .toUri();
 
         try {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-RapidAPI-Key", jsearchApiKey);
             headers.set("X-RapidAPI-Host", "jsearch.p.rapidapi.com");
             var entity = new org.springframework.http.HttpEntity<>(headers);
-            var response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, String.class);
-            JsonNode root = objectMapper.readTree(response.getBody());
+            var response = restTemplate.exchange(uri, org.springframework.http.HttpMethod.GET, entity, String.class);
+            String body = response.getBody();
+            log.info("JSearch raw response length: {}", body == null ? 0 : body.length());
+            JsonNode root = objectMapper.readTree(body);
             JsonNode data = root.path("data");
+            log.info("JSearch data isArray={}, status={}", data.isArray(), root.path("status").asText());
 
             List<RawJobLead> leads = new ArrayList<>();
             if (data.isArray()) {
@@ -98,10 +106,10 @@ public class JobDiscoveryService {
                     leads.add(mapJSearchItem(item));
                 }
             }
-            log.info("JSearch returned {} leads", leads.size());
+            log.info("JSearch returned {} leads for query='{}'", leads.size(), fullQuery);
             return leads;
         } catch (Exception e) {
-            log.error("JSearch error: {}", e.getMessage());
+            log.error("JSearch error: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }
@@ -127,18 +135,22 @@ public class JobDiscoveryService {
     // ── Adzuna ────────────────────────────────────────────────────────────────
 
     private List<RawJobLead> searchViaAdzuna(String query, String location) {
-        String url = UriComponentsBuilder
-                .fromUriString("https://api.adzuna.com/v1/api/jobs/" + adzunaCountry + "/search/1")
+        // Pick country based on location keyword; fall back to configured default
+        String country = resolveAdzunaCountry(location);
+        URI uri = UriComponentsBuilder
+                .fromUriString("https://api.adzuna.com/v1/api/jobs/" + country + "/search/1")
                 .queryParam("app_id", adzunaAppId)
                 .queryParam("app_key", adzunaAppKey)
                 .queryParam("what", query)
                 .queryParam("where", location != null ? location : "")
                 .queryParam("results_per_page", 20)
                 .queryParam("content-type", "application/json")
-                .toUriString();
+                .build()
+                .encode()
+                .toUri();
 
         try {
-            String body = restTemplate.getForObject(url, String.class);
+            String body = restTemplate.getForObject(uri, String.class);
             JsonNode root = objectMapper.readTree(body);
             JsonNode results = root.path("results");
 
@@ -148,12 +160,24 @@ public class JobDiscoveryService {
                     leads.add(mapAdzunaItem(item));
                 }
             }
-            log.info("Adzuna returned {} leads", leads.size());
+            log.info("Adzuna [{}] returned {} leads", country, leads.size());
             return leads;
         } catch (Exception e) {
             log.error("Adzuna error: {}", e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    private String resolveAdzunaCountry(String location) {
+        if (location == null) return adzunaCountry;
+        String loc = location.toLowerCase();
+        if (loc.contains("india") || loc.contains("bangalore") || loc.contains("banglore")
+                || loc.contains("mumbai") || loc.contains("delhi") || loc.contains("hyderabad")
+                || loc.contains("chennai") || loc.contains("pune") || loc.contains("india")) return "in";
+        if (loc.contains("uk") || loc.contains("london") || loc.contains("england")) return "gb";
+        if (loc.contains("australia") || loc.contains("sydney") || loc.contains("melbourne")) return "au";
+        if (loc.contains("canada") || loc.contains("toronto")) return "ca";
+        return adzunaCountry;
     }
 
     private RawJobLead mapAdzunaItem(JsonNode item) {
@@ -174,13 +198,15 @@ public class JobDiscoveryService {
     // ── Remotive (free no-key fallback) ───────────────────────────────────────
 
     private List<RawJobLead> searchViaRemotive(String query) {
-        String url = UriComponentsBuilder.fromUriString("https://remotive.com/api/remote-jobs")
+        URI uri = UriComponentsBuilder.fromUriString("https://remotive.com/api/remote-jobs")
                 .queryParam("search", query)
                 .queryParam("limit", 20)
-                .toUriString();
+                .build()
+                .encode()
+                .toUri();
 
         try {
-            String body = restTemplate.getForObject(url, String.class);
+            String body = restTemplate.getForObject(uri, String.class);
             JsonNode root = objectMapper.readTree(body);
             JsonNode jobs = root.path("jobs");
 
