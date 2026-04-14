@@ -7,7 +7,9 @@ import com.placementgo.backend.autoapply.entity.AutoApplyJobLead;
 import com.placementgo.backend.autoapply.enums.LeadStatus;
 import com.placementgo.backend.autoapply.repository.AutoApplyConfigRepository;
 import com.placementgo.backend.autoapply.repository.AutoApplyJobLeadRepository;
+import com.placementgo.backend.autoapply.service.ApplicationTemplateService;
 import com.placementgo.backend.autoapply.service.AutoApplyOrchestrator;
+import com.placementgo.backend.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,8 @@ public class AutoApplyController {
     private final AutoApplyConfigRepository configRepo;
     private final AutoApplyJobLeadRepository leadRepo;
     private final AutoApplyOrchestrator orchestrator;
+    private final ApplicationTemplateService templateService;
+    private final ResumeRepository resumeRepo;
 
     // ── Config ────────────────────────────────────────────────────────────────
 
@@ -108,6 +112,25 @@ public class AutoApplyController {
                                       @AuthenticationPrincipal UUID userId) {
         orchestrator.skipLead(userId, leadId);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Re-generate the application template using the user's latest resume */
+    @PostMapping("/leads/{leadId}/regenerate-template")
+    public ResponseEntity<JobLeadDto> regenerateTemplate(@PathVariable UUID leadId,
+                                                          @AuthenticationPrincipal UUID userId) {
+        AutoApplyJobLead lead = leadRepo.findByIdAndUserId(leadId, userId)
+                .orElse(null);
+        if (lead == null) return ResponseEntity.notFound().build();
+
+        String parsedResumeJson = resumeRepo.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .map(r -> r.getParsedJson())
+                .orElse(null);
+
+        String newTemplate = templateService.generate(
+                parsedResumeJson, lead.getJobTitle(), lead.getCompany(), lead.getJobDescription());
+        lead.setApplicationTemplate(newTemplate);
+        leadRepo.save(lead);
+        return ResponseEntity.ok(toDto(lead));
     }
 
     /** Stats summary */

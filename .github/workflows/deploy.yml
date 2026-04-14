@@ -24,14 +24,20 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            echo "==> Injecting new API keys into .env..."
+            echo "==> Injecting new API keys into .env (only if secret is non-empty)..."
             cd ~/app
-            grep -qxF "JSEARCH_API_KEY=${JSEARCH_API_KEY}" .env || echo "JSEARCH_API_KEY=${JSEARCH_API_KEY}" >> .env
-            grep -qxF "ADZUNA_APP_ID=${ADZUNA_APP_ID}" .env || echo "ADZUNA_APP_ID=${ADZUNA_APP_ID}" >> .env
-            grep -qxF "ADZUNA_APP_KEY=${ADZUNA_APP_KEY}" .env || echo "ADZUNA_APP_KEY=${ADZUNA_APP_KEY}" >> .env
-            sed -i "s|^JSEARCH_API_KEY=.*|JSEARCH_API_KEY=${JSEARCH_API_KEY}|" .env
-            sed -i "s|^ADZUNA_APP_ID=.*|ADZUNA_APP_ID=${ADZUNA_APP_ID}|" .env
-            sed -i "s|^ADZUNA_APP_KEY=.*|ADZUNA_APP_KEY=${ADZUNA_APP_KEY}|" .env
+            if [ -n "${JSEARCH_API_KEY}" ]; then
+              grep -qxF "JSEARCH_API_KEY=${JSEARCH_API_KEY}" .env || echo "JSEARCH_API_KEY=${JSEARCH_API_KEY}" >> .env
+              sed -i "s|^JSEARCH_API_KEY=.*|JSEARCH_API_KEY=${JSEARCH_API_KEY}|" .env
+            fi
+            if [ -n "${ADZUNA_APP_ID}" ]; then
+              grep -qxF "ADZUNA_APP_ID=${ADZUNA_APP_ID}" .env || echo "ADZUNA_APP_ID=${ADZUNA_APP_ID}" >> .env
+              sed -i "s|^ADZUNA_APP_ID=.*|ADZUNA_APP_ID=${ADZUNA_APP_ID}|" .env
+            fi
+            if [ -n "${ADZUNA_APP_KEY}" ]; then
+              grep -qxF "ADZUNA_APP_KEY=${ADZUNA_APP_KEY}" .env || echo "ADZUNA_APP_KEY=${ADZUNA_APP_KEY}" >> .env
+              sed -i "s|^ADZUNA_APP_KEY=.*|ADZUNA_APP_KEY=${ADZUNA_APP_KEY}|" .env
+            fi
 
             echo "==> Checking disk space..."
             DISK_USED=$(df / | awk 'NR==2{gsub(/%/,"",$5); print $5}')
