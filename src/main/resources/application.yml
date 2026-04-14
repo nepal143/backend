@@ -66,3 +66,17 @@ resume:
 razorpay:
   key-id: ${RAZORPAY_KEY_ID:rzp_test_Sc9CZ9jM42rqxI}
   key-secret: ${RAZORPAY_KEY_SECRET:3073xjbKcPnGVG089eMlAmoe}
+
+# ── Auto-Apply Pipeline ───────────────────────────────────────────────────────
+autoapply:
+  # Cron: every 6 hours by default.  Override: "0 0 8,14,20 * * *" for 3×/day
+  schedule:
+    cron: ${AUTOAPPLY_CRON:0 0 */6 * * *}
+  # JSearch (RapidAPI) – https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+  jsearch:
+    api-key: ${JSEARCH_API_KEY:}
+  # Adzuna – https://developer.adzuna.com/
+  adzuna:
+    app-id:  ${ADZUNA_APP_ID:}
+    app-key: ${ADZUNA_APP_KEY:}
+    country: ${ADZUNA_COUNTRY:us}

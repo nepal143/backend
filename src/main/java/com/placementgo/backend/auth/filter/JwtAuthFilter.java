@@ -45,20 +45,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         // ✅ 2️⃣ Normal JWT logic
         String header = request.getHeader("Authorization");
+        // SSE connections use a query param because EventSource doesn't support custom headers
+        String queryToken = request.getParameter("token");
 
+        String rawToken = null;
         if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+            rawToken = header.substring(7);
+        } else if (queryToken != null && !queryToken.isBlank()) {
+            rawToken = queryToken;
+        }
 
-            if (jwtUtil.validate(token)) {
-                UUID userId = jwtUtil.extractUserId(token);
+        if (rawToken != null && jwtUtil.validate(rawToken)) {
+            UUID userId = jwtUtil.extractUserId(rawToken);
 
-                var auth = new UsernamePasswordAuthenticationToken(
-                        userId,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            var auth = new UsernamePasswordAuthenticationToken(
+                    userId,
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         filterChain.doFilter(request, response);
