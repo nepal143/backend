@@ -36,10 +36,11 @@ jobs:
             echo "==> Checking disk space..."
             DISK_USED=$(df / | awk 'NR==2{gsub(/%/,"",$5); print $5}')
             echo "Disk used: ${DISK_USED}%"
-            if [ "$DISK_USED" -gt 70 ]; then
-              echo "Disk above 70%, running aggressive prune..."
+            if [ "$DISK_USED" -gt 60 ]; then
+              echo "Disk above 60%, running aggressive prune..."
               docker builder prune -f
-              docker image prune -f
+              docker image prune -af
+              docker system prune -f
             fi
 
             echo "==> Rebuilding backend container..."
