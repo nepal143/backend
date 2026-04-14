@@ -79,8 +79,8 @@ public class AutoApplyOrchestrator {
 
     /**
      * Triggered manually via the REST API (user clicks "Scan Now").
+     * Runs in a background thread; each lead is saved + notified as it is processed.
      */
-    @Transactional
     public Map<String, Object> runManualScan(UUID userId) {
         AutoApplyConfig config = configRepo.findByUserId(userId)
                 .orElseThrow(() -> new IllegalStateException("Auto-apply not configured for this user"));

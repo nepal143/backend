@@ -11,6 +11,7 @@ import com.placementgo.backend.autoapply.service.ApplicationTemplateService;
 import com.placementgo.backend.autoapply.service.AutoApplyOrchestrator;
 import com.placementgo.backend.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/v1/autoapply")
 @RequiredArgsConstructor
+@Slf4j
 public class AutoApplyController {
 
     private final AutoApplyConfigRepository configRepo;
@@ -63,11 +66,21 @@ public class AutoApplyController {
 
     // ── Scan ─────────────────────────────────────────────────────────────────
 
-    /** Trigger an on-demand job discovery + apply scan for the current user */
+    /** Trigger an on-demand job discovery + apply scan for the current user.
+     *  Returns 202 immediately; scan runs in the background and pushes SSE notifications. */
     @PostMapping("/scan")
     public ResponseEntity<Map<String, Object>> scan(@AuthenticationPrincipal UUID userId) {
-        Map<String, Object> result = orchestrator.runManualScan(userId);
-        return ResponseEntity.ok(result);
+        if (configRepo.findByUserId(userId).isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Auto-apply not configured for this user"));
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                orchestrator.runManualScan(userId);
+            } catch (Exception e) {
+                log.error("Async scan failed for user {}: {}", userId, e.getMessage(), e);
+            }
+        });
+        return ResponseEntity.accepted().body(Map.of("started", true, "message", "Scan started"));
     }
 
     // ── Leads ─────────────────────────────────────────────────────────────────
