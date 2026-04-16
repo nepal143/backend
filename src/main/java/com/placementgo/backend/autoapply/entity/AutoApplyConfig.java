@@ -27,19 +27,19 @@ public class AutoApplyConfig {
 
     // ── Search preferences ────────────────────────────────────────────────────
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "aac_job_titles", joinColumns = @JoinColumn(name = "config_id"))
     @Column(name = "job_title")
     @Builder.Default
     private List<String> targetJobTitles = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "aac_locations", joinColumns = @JoinColumn(name = "config_id"))
     @Column(name = "location")
     @Builder.Default
     private List<String> preferredLocations = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "aac_blacklisted", joinColumns = @JoinColumn(name = "config_id"))
     @Column(name = "company")
     @Builder.Default
